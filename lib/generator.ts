@@ -1,9 +1,8 @@
 import { BrandStyle, SiteInput } from "./types";
 
-const toneByStyle: Record<BrandStyle, { adjective: string; cta: string; voice: string; theme: ThemeClasses }> = {
+const toneByStyle: Record<BrandStyle, { adjective: string; voice: string; theme: ThemeClasses }> = {
   Modern: {
     adjective: "streamlined",
-    cta: "Book a strategy call",
     voice: "smart, clear, and contemporary",
     theme: {
       section: "py-16",
@@ -14,7 +13,6 @@ const toneByStyle: Record<BrandStyle, { adjective: string; cta: string; voice: s
   },
   Luxury: {
     adjective: "bespoke",
-    cta: "Request a private consultation",
     voice: "elevated, polished, and exclusive",
     theme: {
       section: "py-20",
@@ -25,7 +23,6 @@ const toneByStyle: Record<BrandStyle, { adjective: string; cta: string; voice: s
   },
   Friendly: {
     adjective: "welcoming",
-    cta: "Let’s chat today",
     voice: "warm, conversational, and supportive",
     theme: {
       section: "py-16",
@@ -36,7 +33,6 @@ const toneByStyle: Record<BrandStyle, { adjective: string; cta: string; voice: s
   },
   Minimal: {
     adjective: "focused",
-    cta: "Get started",
     voice: "concise, intentional, and calm",
     theme: {
       section: "py-14",
@@ -47,7 +43,6 @@ const toneByStyle: Record<BrandStyle, { adjective: string; cta: string; voice: s
   },
   Bold: {
     adjective: "high-impact",
-    cta: "Claim your free quote",
     voice: "confident, energetic, and direct",
     theme: {
       section: "py-16",
@@ -66,33 +61,108 @@ export interface ThemeClasses {
 }
 
 export interface GeneratedCopy {
+  eyebrow: string;
   heroHeadline: string;
   heroSubheadline: string;
   primaryCta: string;
+  secondaryCta: string;
+  howItWorks: Array<{ title: string; description: string }>;
+  servicesIntro: string;
+  serviceDescriptions: string[];
   testimonials: Array<{ quote: string; author: string }>;
   faq: Array<{ question: string; answer: string }>;
   theme: ThemeClasses;
 }
 
+function detectCategory(services: string[]): "food" | "cleaning" | "consulting" | "default" {
+  const content = services.join(" ").toLowerCase();
+
+  if (/(food|restaurant|pizza|cafe|café|dining|menu)/.test(content)) {
+    return "food";
+  }
+
+  if (/(cleaning|cleaner|janitorial|maid|deep clean|housekeeping)/.test(content)) {
+    return "cleaning";
+  }
+
+  if (/(consulting|consultant|marketing|growth|branding|strategy|agency)/.test(content)) {
+    return "consulting";
+  }
+
+  return "default";
+}
+
 export function generateCopy(input: SiteInput): GeneratedCopy {
   const tone = toneByStyle[input.brandStyle];
   const primaryService = input.services[0] ?? "professional services";
+  const category = detectCategory(input.services);
+
+  const ctaByCategory = {
+    food: { primary: "Order now", secondary: "View menu" },
+    cleaning: { primary: "Get a free quote", secondary: "Schedule cleaning" },
+    consulting: { primary: "Book a call", secondary: "See case studies" },
+    default: { primary: "Get started", secondary: "Learn more" }
+  }[category];
+
+  const heroByCategory = {
+    food: {
+      eyebrow: "Top-rated local favorite",
+      subheadline: `Fast, flavor-packed ${primaryService.toLowerCase()} crafted for ${input.city} locals who want quality without the wait.`,
+      servicesIntro: `Freshly prepared offerings designed for busy days, group dinners, and everything in between.`
+    },
+    cleaning: {
+      eyebrow: "Trusted by homes and offices",
+      subheadline: `Professional ${primaryService.toLowerCase()} that keeps your space spotless, healthy, and guest-ready across ${input.city}.`,
+      servicesIntro: `Detailed cleaning plans tailored to your property, schedule, and quality expectations.`
+    },
+    consulting: {
+      eyebrow: "Built for ambitious teams",
+      subheadline: `Strategic ${primaryService.toLowerCase()} that helps ${input.city} businesses grow faster with clear priorities and measurable outcomes.`,
+      servicesIntro: `Outcome-focused services that align your brand, funnel, and execution around growth.`
+    },
+    default: {
+      eyebrow: `${input.city} trusted team`,
+      subheadline: `Premium ${primaryService.toLowerCase()} delivered with a ${tone.voice} experience for clients who expect dependable results.`,
+      servicesIntro: `Purpose-built services designed to help you move faster, perform better, and stay ahead.`
+    }
+  }[category];
 
   return {
+    eyebrow: heroByCategory.eyebrow,
     heroHeadline: `${input.businessName}: ${tone.adjective} ${primaryService} in ${input.city}`,
-    heroSubheadline: `Built for people who value ${tone.voice}. We help ${input.city} clients get reliable results with ${input.businessName}.`,
-    primaryCta: tone.cta,
+    heroSubheadline: heroByCategory.subheadline,
+    primaryCta: ctaByCategory.primary,
+    secondaryCta: ctaByCategory.secondary,
+    howItWorks: [
+      {
+        title: "Share your goals",
+        description: `Tell ${input.businessName} what success looks like and we'll map the right plan for you.`
+      },
+      {
+        title: "Get a tailored plan",
+        description: `Receive a focused roadmap with clear deliverables, timelines, and transparent next steps.`
+      },
+      {
+        title: "Launch with confidence",
+        description: `Move forward with proactive support and consistent updates from kickoff to completion.`
+      }
+    ],
+    servicesIntro: heroByCategory.servicesIntro,
+    serviceDescriptions: input.services.map(
+      (service) =>
+        `${service} tailored for ${input.city} clients who want faster execution, reliable communication, and premium outcomes.`
+    ),
     testimonials: [
       {
-        quote: `${input.businessName} delivered exactly what they promised. The process was clear and the result felt ${tone.adjective}.`,
+        quote: `${input.businessName} delivered exactly what they promised. The process was clear, proactive, and felt truly ${tone.adjective}.`,
         author: `Avery M., ${input.city}`
       },
       {
-        quote: `From first contact to final delivery, the team made ${primaryService} simple. Highly recommended.`,
+        quote: `From first contact to final delivery, the team made ${primaryService.toLowerCase()} seamless and easy to trust.`,
         author: `Jordan P., ${input.city}`
       },
       {
-        quote: `I was looking for dependable ${primaryService}, and ${input.businessName} exceeded expectations.`,
+        quote: `We needed a partner who could execute without hand-holding. ${input.businessName} exceeded expectations.`,
         author: `Taylor S., ${input.city}`
       }
     ],
